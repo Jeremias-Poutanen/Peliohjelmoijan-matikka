@@ -31,17 +31,17 @@ public class WedgeTrigger : MonoBehaviour
         Vector3 v = vecTargetPos - vecTriggerPos;
         Vector3 l = lookAtObject.transform.position - vecTriggerPos;
 
+        Vector3 proj_v = Vector3.Project(v, new Vector3(v.x, vecTriggerPos.y, v.z));
+        
+
         Vector3 v_hat = v / v.magnitude;
         Vector3 l_hat = l / l.magnitude;
+        Vector3 proj_v_hat = proj_v / proj_v.magnitude;
 
-        Vector3 y_topOfTrigger = vecTargetPos + new Vector3(0, height / 2, 0);
-        Vector3 y_underTrigger = vecTargetPos - new Vector3(0, height / 2, 0);
+        Vector3 topOfTrigger = vecTriggerPos + new Vector3(0, height / 2, 0);
+        Vector3 underTrigger = vecTriggerPos - new Vector3(0, height / 2, 0);
 
-        float dotProduct = Vector3.Dot(v_hat, l_hat);
-
-        // Check if target is seen by enemy
-        if (dotProduct > Mathf.Cos(thresholdAngle / 2 * Mathf.Deg2Rad) && v.magnitude < radius && vecTargetPos.y < y_topOfTrigger.y && vecTargetPos.y > y_underTrigger.y) isSeen = true;
-        else isSeen = false;
+        float dotProduct = Vector3.Dot(proj_v_hat, l_hat);
 
         // Calculate rotation for look limits
         float angle = thresholdAngle / 2;
@@ -51,6 +51,27 @@ public class WedgeTrigger : MonoBehaviour
         // Cannot use -rotation (because quaternions??), so need to construct quaternion again
         rotation = Quaternion.Euler(0, -angle, 0);
         Vector3 l_limitLeft = rotation * l_hat;
+
+        Vector3 topOfLimitRight = l_limitRight + new Vector3(0, height / 2, 0);
+        Vector3 underLimitRight = l_limitRight - new Vector3(0, height / 2, 0);
+
+        Vector3 topOfLimitLeft = l_limitLeft + new Vector3(0, height / 2, 0);
+        Vector3 underLimitLeft = l_limitLeft - new Vector3(0, height / 2, 0);
+
+        // Check if target is seen by enemy
+        if (dotProduct > Mathf.Cos(thresholdAngle / 2 * Mathf.Deg2Rad) && proj_v.magnitude < radius)
+        {
+            if (vecTargetPos.y < topOfTrigger.y && vecTargetPos.y > underTrigger.y) isSeen = true;
+            else isSeen = false;
+        }
+        else isSeen = false;
+
+        MyDraw.DrawVectorAt(vecTriggerPos, proj_v, new Color32(0xF0, 0xA5, 0x00, 0xA0), 3.0f);
+        MyDraw.DrawVectorAt(vecTriggerPos, proj_v_hat, Color.magenta, 3.0f);
+        Handles.color = Color.white;
+        Handles.DrawLine(topOfTrigger, underTrigger, 3.0f);
+        Handles.DrawLine(topOfLimitRight, underLimitRight, 3.0f);
+        Handles.DrawLine(topOfLimitLeft, underLimitLeft, 3.0f);
 
         // Draw vectors
         if (drawTargetVector) MyDraw.DrawVectorAt(vecTriggerPos, v, Color.blue, 3.0f);
