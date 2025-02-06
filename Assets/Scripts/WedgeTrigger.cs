@@ -11,6 +11,9 @@ public class WedgeTrigger : MonoBehaviour
     [Range(0, 360f)]
     public float thresholdAngle = 90f;
 
+    [Range(0.1f, 10f)]
+    public float height = 3;
+
     public GameObject targetObject;
     public GameObject lookAtObject;
 
@@ -31,10 +34,13 @@ public class WedgeTrigger : MonoBehaviour
         Vector3 v_hat = v / v.magnitude;
         Vector3 l_hat = l / l.magnitude;
 
+        Vector3 y_topOfTrigger = vecTargetPos + new Vector3(0, height / 2, 0);
+        Vector3 y_underTrigger = vecTargetPos - new Vector3(0, height / 2, 0);
+
         float dotProduct = Vector3.Dot(v_hat, l_hat);
 
         // Check if target is seen by enemy
-        if (dotProduct > Mathf.Cos(thresholdAngle / 2 * Mathf.Deg2Rad) && v.magnitude < radius) isSeen = true;
+        if (dotProduct > Mathf.Cos(thresholdAngle / 2 * Mathf.Deg2Rad) && v.magnitude < radius && vecTargetPos.y < y_topOfTrigger.y && vecTargetPos.y > y_underTrigger.y) isSeen = true;
         else isSeen = false;
 
         // Calculate rotation for look limits
