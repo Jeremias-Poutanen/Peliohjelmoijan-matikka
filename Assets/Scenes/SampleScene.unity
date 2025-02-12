@@ -960,7 +960,7 @@ Transform:
   m_GameObject: {fileID: 983078276}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7.51, y: 0.96, z: 4.71}
+  m_LocalPosition: {x: 2.49, y: 4.69, z: 8.23}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1358,7 +1358,7 @@ Transform:
   m_GameObject: {fileID: 1462748268}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 22.84, y: 0, z: -0.64}
+  m_LocalPosition: {x: 26.78, y: 0, z: 4.8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1440,14 +1440,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fba169a78b649344e97be816eb9bf072, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  radius: 10.3
-  thresholdAngle: 111.3
-  height: 3
+  radius: 14.9
+  thresholdAngle: 176
+  height: 4.79
   targetObject: {fileID: 983078276}
   lookAtObject: {fileID: 1462748268}
-  drawCircle: 1
+  drawTriggerArea: 1
   drawLimitVectors: 1
-  drawTargetVector: 0
+  drawTargetVector: 1
+  drawLookAtVector: 1
 --- !u!1 &1975848758
 GameObject:
   m_ObjectHideFlags: 0

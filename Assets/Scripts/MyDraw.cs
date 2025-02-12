@@ -11,7 +11,7 @@ public static class MyDraw
         Handles.color = c;
         Handles.DrawLine(pos, pos + vec, thickness);
 
-        Handles.ConeHandleCap(0, pos + vec - 0.1f * vec.normalized, Quaternion.LookRotation(vec), 0.143f, EventType.Repaint);
+        Handles.ConeHandleCap(0, pos + vec - 0.4f * vec.normalized, Quaternion.LookRotation(vec), 0.572f, EventType.Repaint);
         Handles.color = orig; // restore the original color
     }
 }
