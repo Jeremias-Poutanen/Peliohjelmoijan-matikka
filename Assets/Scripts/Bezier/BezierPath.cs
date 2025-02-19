@@ -2,14 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using static UnityEngine.Rendering.HableCurve;
 
 public class BezierPath : MonoBehaviour
 {
     public GameObject[] points;
-
-    [Range(0f, 1f)]
+    // From -0.1 to 1.1 for demonstration purpouses
+    [Range(-0.1f, 1.1f)]
     public float t = 0f;
+    public bool loop = false;
 
     private int GetCurrentSegment()
     {
@@ -20,7 +20,8 @@ public class BezierPath : MonoBehaviour
 
     private int GetSegments()
     {
-        return points.Length - 1;
+        if (loop) return points.Length;
+        else return points.Length - 1;
     }
 
     private float AdjustTValue(int segment)
@@ -28,7 +29,7 @@ public class BezierPath : MonoBehaviour
         return (t - ((float)segment / (float)GetSegments()))/(1.0f / (float)GetSegments());
     }
 
-    private Vector3 getBezierPoint(Vector3 A, Vector3 B, Vector3 C, Vector3 D, float t)
+    private Vector3 GetBezierPoint(Vector3 A, Vector3 B, Vector3 C, Vector3 D, float t)
     {
         // Interpolation, 1st stage
         Vector3 X = (1 - t) * A + t * B;
@@ -44,15 +45,38 @@ public class BezierPath : MonoBehaviour
 
     private void OnDrawGizmos()
     {
+        if (loop)
+        {
+            if (t > 1f) t -= 1;
+            else if (t < 0) t += 1;
+        }
+        else
+        {
+            if (t > 1f) t = 1;
+            else if (t < 0) t = 0;
+        }
+
         int segments = GetSegments();
 
         // Draw the bezier segments
         for (int i = 0; i < segments; i++)
         {
-            Vector3 A = points[i].GetComponent<BezierPoint>().getAnchor();
-            Vector3 B = points[i].GetComponent<BezierPoint>().getControl2();
-            Vector3 C = points[i+1].GetComponent<BezierPoint>().getControl1();
-            Vector3 D = points[i+1].GetComponent<BezierPoint>().getAnchor();
+            if(loop && i + 1 == segments)
+            {
+                Vector3 a = points[i].GetComponent<BezierPoint>().GetAnchor();
+                Vector3 b = points[i].GetComponent<BezierPoint>().GetControl2();
+                Vector3 c = points[0].GetComponent<BezierPoint>().GetControl1();
+                Vector3 d = points[0].GetComponent<BezierPoint>().GetAnchor();
+
+                Handles.DrawBezier(a, d, b, c, Color.white, null, 5f);
+
+                break;
+            }
+
+            Vector3 A = points[i].GetComponent<BezierPoint>().GetAnchor();
+            Vector3 B = points[i].GetComponent<BezierPoint>().GetControl2();
+            Vector3 C = points[i+1].GetComponent<BezierPoint>().GetControl1();
+            Vector3 D = points[i+1].GetComponent<BezierPoint>().GetAnchor();
 
             Handles.DrawBezier(A, D, B, C, Color.white, null, 5f);
         }
@@ -63,12 +87,27 @@ public class BezierPath : MonoBehaviour
         float myTValue = AdjustTValue(segment);
 
         // Get the points for THIS SEGMENT!
-        Vector3 pointA = points[segment].GetComponent<BezierPoint>().getAnchor();
-        Vector3 pointB = points[segment].GetComponent<BezierPoint>().getControl2();
-        Vector3 pointC = points[segment + 1].GetComponent<BezierPoint>().getControl1();
-        Vector3 pointD = points[segment + 1].GetComponent<BezierPoint>().getAnchor();
+        Vector3 pointA;
+        Vector3 pointB;
+        Vector3 pointC;
+        Vector3 pointD;
 
-        Vector3 bezPoint = getBezierPoint(pointA, pointB, pointC, pointD, myTValue);
+        if (loop && segment + 1 == segments)
+        {
+            pointA = points[segment].GetComponent<BezierPoint>().GetAnchor();
+            pointB = points[segment].GetComponent<BezierPoint>().GetControl2();
+            pointC = points[0].GetComponent<BezierPoint>().GetControl1();
+            pointD = points[0].GetComponent<BezierPoint>().GetAnchor();
+        }
+        else
+        {
+            pointA = points[segment].GetComponent<BezierPoint>().GetAnchor();
+            pointB = points[segment].GetComponent<BezierPoint>().GetControl2();
+            pointC = points[segment + 1].GetComponent<BezierPoint>().GetControl1();
+            pointD = points[segment + 1].GetComponent<BezierPoint>().GetAnchor();
+        }
+
+        Vector3 bezPoint = GetBezierPoint(pointA, pointB, pointC, pointD, myTValue);
 
         Gizmos.color = Color.blue;
         Gizmos.DrawSphere(bezPoint, 0.1f);
