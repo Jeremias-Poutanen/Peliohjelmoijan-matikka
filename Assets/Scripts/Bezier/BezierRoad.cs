@@ -12,9 +12,18 @@ public class BezierRoad : MonoBehaviour
     // From -0.1 to 1.1 for demonstration purpouses
     [Range(-0.1f, 1.1f)]
     public float t = 0f;
+    [Range(5, 100)]
+    public int crossSectionCount = 10;
     public bool loop = false;
+    public bool drawBezierVectors = true;
 
-    private int GetCurrentSegment()
+    // Current Bezier points
+    Vector3 currentPointA;
+    Vector3 currentPointB;
+    Vector3 currentPointC;
+    Vector3 currentPointD;
+
+    private int GetCurrentSegment(float t)
     {
         float seg = t * GetSegments();
 
@@ -27,7 +36,7 @@ public class BezierRoad : MonoBehaviour
         else return points.Length - 1;
     }
 
-    private float AdjustTValue(int segment)
+    private float AdjustTValue(int segment, float t)
     {
         return (t - ((float)segment / (float)GetSegments())) / (1.0f / (float)GetSegments());
     }
@@ -98,61 +107,92 @@ public class BezierRoad : MonoBehaviour
             Handles.DrawBezier(A, D, B, C, Color.white, null, 5f);
         }
 
-        int segment = GetCurrentSegment();
+        int segment = GetCurrentSegment(t);
         if (segment == segments) segment--; // t = 1.0 --> segment should be segment-1
 
-        float myTValue = AdjustTValue(segment);
+        float myTValue = AdjustTValue(segment, t);
 
-        // Get the points for THIS SEGMENT!
-        Vector3 pointA;
-        Vector3 pointB;
-        Vector3 pointC;
-        Vector3 pointD;
+        UpdateCurrentBezierPoints(segment);
 
-        if (loop && segment + 1 == segments)
-        {
-            pointA = points[segment].GetComponent<BezierPoint>().GetAnchor();
-            pointB = points[segment].GetComponent<BezierPoint>().GetControl2();
-            pointC = points[0].GetComponent<BezierPoint>().GetControl1();
-            pointD = points[0].GetComponent<BezierPoint>().GetAnchor();
-        }
-        else
-        {
-            pointA = points[segment].GetComponent<BezierPoint>().GetAnchor();
-            pointB = points[segment].GetComponent<BezierPoint>().GetControl2();
-            pointC = points[segment + 1].GetComponent<BezierPoint>().GetControl1();
-            pointD = points[segment + 1].GetComponent<BezierPoint>().GetAnchor();
-        }
-
-        Vector3 bezPoint = GetBezierPoint(pointA, pointB, pointC, pointD, myTValue);
+        Vector3 bezPoint = GetBezierPoint(currentPointA, currentPointB, currentPointC, currentPointD, myTValue);
 
         Gizmos.color = Color.blue;
         Gizmos.DrawSphere(bezPoint, 0.1f);
 
         // Get the forward vector
-        Vector3 forward = GetBezierForwardVector(pointA, pointB, pointC, pointD, myTValue);
-        MyDraw.DrawVectorAt(bezPoint, 3f * forward, Color.blue, 2f);
+        Vector3 forward = GetBezierForwardVector(currentPointA, currentPointB, currentPointC, currentPointD, myTValue);
 
         // Use Vector3.up to get the "right" vector
         Vector3 right = Vector3.Cross(Vector3.up, forward);
-        MyDraw.DrawVectorAt(bezPoint, 3f * right, Color.red, 2f);
 
         // Use the forward vector and "right" vector to get the correcnt "up"-vector
         Vector3 up = Vector3.Cross(forward, right);
-        MyDraw.DrawVectorAt(bezPoint, 3f * up, Color.green, 2f);
 
-        // Draw the points using the cross section fo the road
-        for (int i = 0; i < CrossSection.vertices.Length; i++)
+        if(drawBezierVectors)
         {
-            // 2D-point xcoord times tight-vector + y-coord times up-vector
-            Vector3 point = CrossSection.vertices[i].point.x * right + CrossSection.vertices[i].point.y * up;
+            MyDraw.DrawVectorAt(bezPoint, 3f * forward, Color.blue, 2f);
+            MyDraw.DrawVectorAt(bezPoint, 3f * right, Color.red, 2f);
+            MyDraw.DrawVectorAt(bezPoint, 3f * up, Color.green, 2f);
+        }
 
-            // Add the bezier point to the above
-            point += bezPoint;
+        DrawCrossSections();
+    }
 
-            // Draw the point
-            Gizmos.color = Color.white;
-            Gizmos.DrawSphere(point, 0.1f);
+    public void DrawCrossSections()
+    {
+        float crossTMultiplier = 1 / (float)crossSectionCount;
+        
+        for(int i = 0; i < crossSectionCount; i++)
+        {
+            float crossTValue = i * crossTMultiplier;
+
+            int segment = GetCurrentSegment(crossTValue);
+            if (segment == GetSegments()) segment--; // t = 1.0 --> segment should be segment-1
+
+            float adjustedCrossTValue = AdjustTValue(segment, crossTValue);
+
+            UpdateCurrentBezierPoints(segment);
+
+            Vector3 point = GetBezierPoint(currentPointA, currentPointB, currentPointC, currentPointD, adjustedCrossTValue);
+
+            // Get the vectors
+            Vector3 forward = GetBezierForwardVector(currentPointA, currentPointB, currentPointC, currentPointD, adjustedCrossTValue);
+            Vector3 right = Vector3.Cross(Vector3.up, forward);
+            Vector3 up = Vector3.Cross(forward, right);
+
+            // Draw the points using the cross section fo the road
+            for (int j = 0; j < CrossSection.vertices.Length; j+=2)
+            {
+                // 2D-point xcoord times tight-vector + y-coord times up-vector
+                Vector3 A = CrossSection.vertices[CrossSection.lineIndices[j]].point.x * right + CrossSection.vertices[CrossSection.lineIndices[j]].point.y * up;
+                Vector3 B = CrossSection.vertices[CrossSection.lineIndices[j+1]].point.x * right + CrossSection.vertices[CrossSection.lineIndices[j+1]].point.y * up;
+
+                // Add the bezier point to the above
+                A += point;
+                B += point;
+
+                // Draw the line
+                Gizmos.color = Color.white;
+                Gizmos.DrawLine(A, B);
+            }
+        }
+    }
+
+    public void UpdateCurrentBezierPoints(int segment)
+    {
+        if (loop && segment + 1 == GetSegments())
+        {
+            currentPointA = points[segment].GetComponent<BezierPoint>().GetAnchor();
+            currentPointB = points[segment].GetComponent<BezierPoint>().GetControl2();
+            currentPointC = points[0].GetComponent<BezierPoint>().GetControl1();
+            currentPointD = points[0].GetComponent<BezierPoint>().GetAnchor();
+        }
+        else
+        {
+            currentPointA = points[segment].GetComponent<BezierPoint>().GetAnchor();
+            currentPointB = points[segment].GetComponent<BezierPoint>().GetControl2();
+            currentPointC = points[segment + 1].GetComponent<BezierPoint>().GetControl1();
+            currentPointD = points[segment + 1].GetComponent<BezierPoint>().GetAnchor();
         }
     }
 }
