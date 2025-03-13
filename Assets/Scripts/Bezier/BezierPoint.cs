@@ -63,11 +63,11 @@ public class BezierPoint : MonoBehaviour
         if (drawPoints)
         {
             Gizmos.color = Color.green;
-            Gizmos.DrawSphere(control1.transform.position, 0.1f);
-            Gizmos.DrawSphere(control2.transform.position, 0.1f);
+            Gizmos.DrawSphere(control1.transform.position, 1f);
+            Gizmos.DrawSphere(control2.transform.position, 1f);
 
             Gizmos.color = Color.red;
-            Gizmos.DrawSphere(transform.position, 0.1f);
+            Gizmos.DrawSphere(transform.position, 1f);
         }
     }
 }
