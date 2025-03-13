@@ -711,9 +711,9 @@ MonoBehaviour:
   - {fileID: 82513371}
   - {fileID: 797553722}
   CrossSection: {fileID: 11400000, guid: 0a1c8a068661e704389e2d5703c61ffe, type: 2}
-  t: 0.236
-  crossSectionCount: 356
-  RoadScaler: 1
+  t: 0.317
+  crossSectionCount: 77
+  RoadScaler: 0.79
   loop: 1
   drawBezierVectors: 1
 --- !u!4 &1401561992
