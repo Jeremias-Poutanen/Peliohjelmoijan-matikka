@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 using UnityEditor;
 using UnityEngine;
 
@@ -255,6 +254,7 @@ public class BezierRoad : MonoBehaviour
 
         // Vertices
         List<Vector3> vertices = new List<Vector3>();
+        List<Vector2> uvs = new List<Vector2>();
 
         float crossTMultiplier = 1 / (float)crossSectionCount;
 
@@ -277,7 +277,6 @@ public class BezierRoad : MonoBehaviour
             Vector3 right = Vector3.Cross(Vector3.up, forward);
             Vector3 up = Vector3.Cross(forward, right);
 
-
             // Compute the vertices for the cross section at this point
             for (int j = 0; j < CrossSection.vertices.Length; j++)
             {
@@ -289,76 +288,79 @@ public class BezierRoad : MonoBehaviour
                 point += bezPoint;
 
                 vertices.Add(point);
+                uvs.Add(new Vector2(CrossSection.vertices[j].u, crossTValue));
             }
+        }
 
-            // Triangles
-            List<int> tris = new List<int>();
+        // Triangles
+        List<int> tris = new List<int>();
 
-            for (int k = 0; k < crossSectionCount-1; k++)
+        for (int k = 0; k < crossSectionCount-1; k++)
+        {
+            int offset = 16;
+            int current = k * offset;
+
+            for(int currentCrossSec = 0; currentCrossSec < 7; currentCrossSec++)
             {
-                int offset = 16;
-                int current = k * offset;
+                tris.Add(current + 1);
+                tris.Add(current + offset +1);
+                tris.Add(current + 2);
 
-                for(int currentCrossSec = 0; currentCrossSec < 7; currentCrossSec++)
-                {
-                    tris.Add(current + 1);
-                    tris.Add(current + offset +1);
-                    tris.Add(current + 2);
+                tris.Add(current + 2);
+                tris.Add(current + offset + 1);
+                tris.Add(current + offset + 2);
 
-                    tris.Add(current + 2);
-                    tris.Add(current + offset + 1);
-                    tris.Add(current + offset + 2);
-
-                    current += 2;
-                }
-
-                // LAST TRIAGLES
-                current = k * offset;
-
-                tris.Add(current + 15);
-                tris.Add(current + offset + 15);
-                tris.Add(current);
-
-                tris.Add(current);
-                tris.Add(current + offset + 15);
-                tris.Add(current + offset);
-            }
-
-            int lastCrossSection = (crossSectionCount - 1) * 16;
-            int first = 0;
-
-            for (int currentCrossSec = 0; currentCrossSec < 7; currentCrossSec++)
-            {
-                tris.Add(lastCrossSection + 1);
-                tris.Add(first + 1);
-                tris.Add(lastCrossSection + 2);
-
-                tris.Add(lastCrossSection + 2);
-                tris.Add(first + 1);
-                tris.Add(first + 2);
-
-                first += 2;
-                lastCrossSection += 2;
+                current += 2;
             }
 
             // LAST TRIAGLES
-            lastCrossSection = (crossSectionCount - 1) * 16;
-            first = 0;
+            current = k * offset;
 
-            tris.Add(lastCrossSection + 15);
-            tris.Add(first + 15);
-            tris.Add(lastCrossSection);
+            tris.Add(current + 15);
+            tris.Add(current + offset + 15);
+            tris.Add(current);
 
-            tris.Add(lastCrossSection);
-            tris.Add(first + 15);
-            tris.Add(first);
-
-            // Set mesh
-            mesh.SetVertices(vertices);
-            mesh.SetTriangles(tris, 0);
-            mesh.RecalculateNormals();
-            
+            tris.Add(current);
+            tris.Add(current + offset + 15);
+            tris.Add(current + offset);
         }
+
+        // LAST CROSS SECTION
+        int lastCrossSection = (crossSectionCount - 1) * 16;
+        int first = 0;
+
+        for (int currentCrossSec = 0; currentCrossSec < 7; currentCrossSec++)
+        {
+            tris.Add(lastCrossSection + 1);
+            tris.Add(first + 1);
+            tris.Add(lastCrossSection + 2);
+
+            tris.Add(lastCrossSection + 2);
+            tris.Add(first + 1);
+            tris.Add(first + 2);
+
+            first += 2;
+            lastCrossSection += 2;
+        }
+
+        // LAST TRIAGLES
+        lastCrossSection = (crossSectionCount - 1) * 16;
+        first = 0;
+
+        tris.Add(lastCrossSection + 15);
+        tris.Add(first + 15);
+        tris.Add(lastCrossSection);
+
+        tris.Add(lastCrossSection);
+        tris.Add(first + 15);
+        tris.Add(first);
+
+        // Set mesh
+        mesh.SetVertices(vertices);
+        mesh.SetTriangles(tris, 0);
+        mesh.SetUVs(0, uvs);
+        mesh.RecalculateNormals();
+
     }
     void Start()
     {
