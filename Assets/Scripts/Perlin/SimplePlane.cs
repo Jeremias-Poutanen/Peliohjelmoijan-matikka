@@ -14,6 +14,14 @@ public class SimplePlane : MonoBehaviour
     [Range(10, 255)]
     public int segments = 100;
 
+    [Range(0f, 255f)]
+    public float noiseHeight = 10f;
+
+    [Range(0f, 25f)]
+    public float noiseAmplitude = 1f;
+
+    public bool drawVertices = false;
+
     Mesh mesh;
 
     private void OnDrawGizmos()
@@ -29,8 +37,11 @@ public class SimplePlane : MonoBehaviour
                 float x = i * delta;
                 float y = j * delta;
 
-                Gizmos.color = Color.green;
-                Gizmos.DrawSphere(new Vector3(x, 0, y), 0.5f);
+                if (drawVertices)
+                {
+                    Gizmos.color = Color.green;
+                    Gizmos.DrawSphere(new Vector3(x, Mathf.PerlinNoise(x * (noiseAmplitude / size), y * (noiseAmplitude / size)) * noiseHeight, y), 0.5f);
+                }
             }
         }
     }
@@ -60,7 +71,7 @@ public class SimplePlane : MonoBehaviour
                 float x = i * delta;
                 float y = j * delta;
 
-                vertices.Add(new Vector3(x, Mathf.PerlinNoise(x, y) * 5, y));
+                vertices.Add(new Vector3(x, Mathf.PerlinNoise(x * (noiseAmplitude / size), y * (noiseAmplitude / size)) * noiseHeight, y));
             }
         }
 
@@ -84,7 +95,7 @@ public class SimplePlane : MonoBehaviour
                 tris.Add(ul);
                 tris.Add(ur);
 
-                // First second triangle
+                // Second triangle
                 tris.Add(ll);
                 tris.Add(ur);
                 tris.Add(lr);
