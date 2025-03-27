@@ -6,7 +6,8 @@ using UnityEngine;
 [RequireComponent(typeof(MeshRenderer))]
 public class SimplePlane : MonoBehaviour
 {
-    
+    // Different layers of noise
+    public List<NoiseSettings> noiseSettings = new List<NoiseSettings>();
 
     [Range(1f, 10000f)]
     public float size = 1000f;
@@ -17,8 +18,18 @@ public class SimplePlane : MonoBehaviour
     [Range(0f, 255f)]
     public float noiseHeight = 10f;
 
-    [Range(0f, 25f)]
-    public float noiseAmplitude = 1f;
+    // [Range(0f, 25f)]
+    // public float frequency = 1f;
+
+    [Range(-10f, 10f)]
+    public float threshold = 0f;
+
+    [Range(-100f, 100f)]
+    public float xshift = 0.0f;
+    [Range(-100f, 100f)]
+    public float yshift = 0.0f;
+
+    public bool useThreshold = false;
 
     public bool drawVertices = false;
 
@@ -28,6 +39,7 @@ public class SimplePlane : MonoBehaviour
     {
         GenerateMesh();
 
+        /* OLD CODE
         float delta = size / (segments - 1);
 
         for (int i = 0; i < segments; i++)
@@ -40,10 +52,11 @@ public class SimplePlane : MonoBehaviour
                 if (drawVertices)
                 {
                     Gizmos.color = Color.green;
-                    Gizmos.DrawSphere(new Vector3(x, Mathf.PerlinNoise(x * (noiseAmplitude / size), y * (noiseAmplitude / size)) * noiseHeight, y), 0.5f);
+                    Gizmos.DrawSphere(new Vector3(x, Mathf.PerlinNoise(x * (frequency / size), y * (frequency / size)) * noiseHeight, y), 0.5f);
                 }
             }
         }
+        */
     }
 
     void GenerateMesh()
@@ -60,6 +73,7 @@ public class SimplePlane : MonoBehaviour
 
         List<Vector3> vertices = new List<Vector3>();
         List<int> tris = new List<int>();
+        List<Vector2> UVs = new List<Vector2>();
 
         float delta = size / (segments - 1);
 
@@ -71,7 +85,29 @@ public class SimplePlane : MonoBehaviour
                 float x = i * delta;
                 float y = j * delta;
 
-                vertices.Add(new Vector3(x, Mathf.PerlinNoise(x * (noiseAmplitude / size), y * (noiseAmplitude / size)) * noiseHeight, y));
+                // Use Perlin Noise
+                float noiseValue = 0;
+
+                for(int k = 0; k < noiseSettings.Count; k++)
+                {
+                    noiseValue += noiseSettings[k].amplitude * 2.0f * (Mathf.PerlinNoise(noiseSettings[k].frequency * (x + xshift), noiseSettings[k].frequency * (y + yshift)) - 0.5f);
+                }
+
+
+                if(useThreshold)
+                {
+                    if(noiseValue < threshold)
+                    {
+                        noiseValue = threshold;
+                    }
+                }
+                float height = noiseHeight * noiseValue;
+
+                // Add the vertex
+                vertices.Add(new Vector3(x, height, y));
+
+                // Add the UVs
+                UVs.Add(new Vector2((x + xshift) / size, (y + yshift) / size));
             }
         }
 
@@ -104,6 +140,7 @@ public class SimplePlane : MonoBehaviour
 
         mesh.SetVertices(vertices);
         mesh.SetTriangles(tris, 0);
+        mesh.SetUVs(0, UVs);
         mesh.RecalculateNormals();
 
         GetComponent<MeshFilter>().mesh = mesh;
