@@ -3,6 +3,10 @@ Shader "Unlit/HeightShader"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        _PlainsTex ("Plains Texture", 2D) = "white" {}
+        _MountainTex ("Mountain Texture", 2D) = "white" {}
+        _SnowTex ("Snow Texture", 2D) = "white" {}
+        _WaterTex ("Water Texture", 2D) = "white" {}
         // Float parameters for "texturing"
         _SnowHeight ("Snow Height", Range(0.0, 1000.0)) = 100.0
         _MountainHeight ("Mountain Height", Range(0.0, 1000.0)) = 50
@@ -25,6 +29,10 @@ Shader "Unlit/HeightShader"
             #include "UnityCG.cginc"
 
             // Passed parameters
+            sampler2D _PlainsTex;
+            sampler2D _MountainTex;
+            sampler2D _SnowTex;
+            sampler2D _WaterTex;
             float _SnowHeight;
             float _WaterHeight;
             float _MountainHeight;
@@ -73,10 +81,19 @@ Shader "Unlit/HeightShader"
             {
                 fixed4 col;
                 //   range (0,1)  R  G  B  A
+                /*
                 fixed4 snowColor = fixed4(1, 1, 1, 1);
                 fixed4 mountainColor = fixed4(.1, .1, .1, 1);
                 fixed4 sandColor = fixed4(.7, .5, .0, 1);
                 fixed4 waterColor = fixed4(0, 0, .8, 1);
+                */
+                fixed4 snowColor = tex2D(_SnowTex, i.uv);
+                fixed4 mountainColor = tex2D(_MountainTex, i.uv);
+                fixed4 plainsColor = tex2D(_PlainsTex, i.uv);
+                fixed4 waterColor = tex2D(_WaterTex, i.uv);
+
+                // Make snow appear more white
+                snowColor *= fixed4(2.5, 2.5, 2.5, 1);
 
                 if(i.height > _SnowHeight + (_BlendingHeight / 2.0))
                 {
@@ -98,14 +115,16 @@ Shader "Unlit/HeightShader"
                 {
                     // Mountain Sand blend
                     float t = HeightBlend(i.height, _MountainHeight);
-                    col = (1.0 - t) * sandColor + t * mountainColor;
+                    col = (1.0 - t) * plainsColor + t * mountainColor;
                 }
                 else if(i.height > _WaterHeight)
                 {
-                    col = sandColor;
+                    // Plains
+                    col = plainsColor;
                 }
                 else
                 {
+                    // Water
                     col = waterColor;
                 }
 
