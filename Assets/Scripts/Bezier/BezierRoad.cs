@@ -13,12 +13,15 @@ public class BezierRoad : MonoBehaviour
     [Range(-0.1f, 1.1f)]
     public float t = 0f;
     [Range(5, 1000)]
-    public int crossSectionCount = 10;
+    public int roadPartsCount = 10;
     [Range(0.1f, 10f)]
     public float RoadScaler = 1f;
     public bool loop = false;
-    public bool drawBezierVectors = true;
-
+    public bool drawCrossSections = true;
+    public bool drawRoadBezier = true;
+    public bool drawBezierPoints = true;
+    public bool drawT = true;
+    
     // Current Bezier points
     Vector3 currentPointA;
     Vector3 currentPointB;
@@ -87,31 +90,49 @@ public class BezierRoad : MonoBehaviour
             else if (t < 0) t = 0;
         }
 
-
-
         int segments = GetSegments();
 
         // Draw the bezier segments
-        for (int i = 0; i < segments; i++)
+        if (drawRoadBezier)
         {
-            if (loop && i + 1 == segments)
+            for (int i = 0; i < segments; i++)
             {
-                Vector3 a = points[i].GetComponent<BezierPoint>().GetAnchor();
-                Vector3 b = points[i].GetComponent<BezierPoint>().GetControl2();
-                Vector3 c = points[0].GetComponent<BezierPoint>().GetControl1();
-                Vector3 d = points[0].GetComponent<BezierPoint>().GetAnchor();
+                if (loop && i + 1 == segments)
+                {
+                    Vector3 a = points[i].GetComponent<BezierPoint>().GetAnchor();
+                    Vector3 b = points[i].GetComponent<BezierPoint>().GetControl2();
+                    Vector3 c = points[0].GetComponent<BezierPoint>().GetControl1();
+                    Vector3 d = points[0].GetComponent<BezierPoint>().GetAnchor();
 
-                Handles.DrawBezier(a, d, b, c, Color.white, null, 5f);
+                    Handles.DrawBezier(a, d, b, c, Color.white, null, 5f);
 
-                break;
+                    break;
+                }
+
+                Vector3 A = points[i].GetComponent<BezierPoint>().GetAnchor();
+                Vector3 B = points[i].GetComponent<BezierPoint>().GetControl2();
+                Vector3 C = points[i + 1].GetComponent<BezierPoint>().GetControl1();
+                Vector3 D = points[i + 1].GetComponent<BezierPoint>().GetAnchor();
+
+                Handles.DrawBezier(A, D, B, C, Color.white, null, 5f);
             }
+        }
 
-            Vector3 A = points[i].GetComponent<BezierPoint>().GetAnchor();
-            Vector3 B = points[i].GetComponent<BezierPoint>().GetControl2();
-            Vector3 C = points[i + 1].GetComponent<BezierPoint>().GetControl1();
-            Vector3 D = points[i + 1].GetComponent<BezierPoint>().GetAnchor();
-
-            Handles.DrawBezier(A, D, B, C, Color.white, null, 5f);
+        if (drawBezierPoints)
+        {
+            foreach (GameObject point in points)
+            {
+                point.GetComponent<BezierPoint>().drawLines = true;
+                point.GetComponent<BezierPoint>().drawPoints = true;
+            }
+        }
+        else
+        {
+            foreach (GameObject point in points)
+            {
+                point.GetComponent<BezierPoint>().drawLines = false;
+                point.GetComponent<BezierPoint>().drawPoints = false;
+            }
         }
 
         int segment = GetCurrentSegment(t);
@@ -123,8 +144,7 @@ public class BezierRoad : MonoBehaviour
 
         Vector3 bezPoint = GetBezierPoint(currentPointA, currentPointB, currentPointC, currentPointD, myTValue);
 
-        Gizmos.color = Color.blue;
-        Gizmos.DrawSphere(bezPoint, 1f);
+
 
         // Get the forward vector
         Vector3 forward = GetBezierForwardVector(currentPointA, currentPointB, currentPointC, currentPointD, myTValue);
@@ -135,21 +155,30 @@ public class BezierRoad : MonoBehaviour
         // Use the forward vector and "right" vector to get the correcnt "up"-vector
         Vector3 up = Vector3.Cross(forward, right);
 
-        if(drawBezierVectors)
+        if (drawT)
         {
+            Gizmos.color = Color.blue;
+            Gizmos.DrawSphere(bezPoint, 1f);
+
             MyDraw.DrawVectorAt(bezPoint, 3f * forward, Color.blue, 2f);
             MyDraw.DrawVectorAt(bezPoint, 3f * right, Color.red, 2f);
             MyDraw.DrawVectorAt(bezPoint, 3f * up, Color.green, 2f);
         }
 
-        DrawCrossSections();
+        if (drawCrossSections)
+        {
+            DrawCrossSections();
+        }
+
+        GenerateRoadMesh();
+        GetComponent<MeshFilter>().sharedMesh = mesh;
     }
 
     public void DrawCrossSections()
     {
-        float crossTMultiplier = 1 / (float)crossSectionCount;
+        float crossTMultiplier = 1 / (float)roadPartsCount;
         
-        for(int i = 0; i < crossSectionCount; i++)
+        for(int i = 0; i < roadPartsCount + 1; i++)
         {
             float crossTValue = i * crossTMultiplier;
             float nextCrossTValue = (i+1) * crossTMultiplier;
@@ -206,17 +235,20 @@ public class BezierRoad : MonoBehaviour
                 Gizmos.DrawLine(A, B);
 
                 // DRAW LINE TO NEXT CROSS SECTION
-                Vector3 nextA = CrossSection.vertices[CrossSection.lineIndices[j]].point.x * nextRight + CrossSection.vertices[CrossSection.lineIndices[j]].point.y * nextUp;
-                Vector3 nextB = CrossSection.vertices[CrossSection.lineIndices[j + 1]].point.x * nextRight + CrossSection.vertices[CrossSection.lineIndices[j + 1]].point.y * nextUp;
+                if (nextCrossTValue <= 1)
+                {
+                    Vector3 nextA = CrossSection.vertices[CrossSection.lineIndices[j]].point.x * nextRight + CrossSection.vertices[CrossSection.lineIndices[j]].point.y * nextUp;
+                    Vector3 nextB = CrossSection.vertices[CrossSection.lineIndices[j + 1]].point.x * nextRight + CrossSection.vertices[CrossSection.lineIndices[j + 1]].point.y * nextUp;
 
-                nextA *= RoadScaler;
-                nextB *= RoadScaler;
+                    nextA *= RoadScaler;
+                    nextB *= RoadScaler;
 
-                nextA += nextPoint;
-                nextB += nextPoint;
+                    nextA += nextPoint;
+                    nextB += nextPoint;
 
-                Gizmos.DrawLine(A, nextA);
-                Gizmos.DrawLine(B, nextB);
+                    Gizmos.DrawLine(A, nextA);
+                    Gizmos.DrawLine(B, nextB);
+                }
             }
         }
     }
@@ -258,9 +290,11 @@ public class BezierRoad : MonoBehaviour
         float totalLength = 0;
         float currentLenght = 0;
 
-        float crossTMultiplier = 1 / (float)crossSectionCount;
+        float crossTMultiplier = 1 / (float)roadPartsCount;
+        
+        Vector3 prevPoint = Vector3.zero;
 
-        for (int i = 0; i < crossSectionCount; i++)
+        for (int i = 0; i < roadPartsCount + 1; i++)
         {
             float crossTValue = i * crossTMultiplier;
 
@@ -273,7 +307,6 @@ public class BezierRoad : MonoBehaviour
             UpdateCurrentBezierPoints(segment);
 
             Vector3 bezPoint = GetBezierPoint(currentPointA, currentPointB, currentPointC, currentPointD, adjustedCrossTValue);
-            Vector3 prevPoint = Vector3.zero;
 
             Vector3 point = Vector3.zero;
 
@@ -285,7 +318,7 @@ public class BezierRoad : MonoBehaviour
             // Compute the vertices for the cross section at this point
             for (int j = 0; j < CrossSection.vertices.Length; j++)
             {
-                // 2D-point xcoord times tight-vector + y-coord times up-vector
+                // 2D-point xcoord times right-vector + y-coord times up-vector
                 point = CrossSection.vertices[j].point.x * right + CrossSection.vertices[j].point.y * up;
 
                 point *= RoadScaler;
@@ -295,76 +328,38 @@ public class BezierRoad : MonoBehaviour
                 vertices.Add(point);
             }
 
-            float length = Vector3.Distance(point, prevPoint);
+            float length;
+
+            if (i == 0)
+            {
+                length = 0;
+            }
+            else
+            {
+                length = Vector3.Distance(point, prevPoint);
+            }
+
             lenghts.Add(length);
             totalLength += length;
 
             prevPoint = point;
         }
 
-        if (loop)
+        // UVs
+        for (int i = 0; i < roadPartsCount + 1; i++)
         {
-            float crossTValue = 1;
+            currentLenght += lenghts[i];
 
-            // CURRENT CROSS SECTION
-            int segment = GetCurrentSegment(crossTValue);
-            if (segment == GetSegments()) segment--; // t = 1.0 --> segment should be segment-1
-
-            float adjustedCrossTValue = AdjustTValue(segment, crossTValue);
-
-            UpdateCurrentBezierPoints(segment);
-
-            Vector3 bezPoint = GetBezierPoint(currentPointA, currentPointB, currentPointC, currentPointD, adjustedCrossTValue);
-            Vector3 prevPoint = Vector3.zero;
-
-            Vector3 point = Vector3.zero;
-
-            // Get the vectors
-            Vector3 forward = GetBezierForwardVector(currentPointA, currentPointB, currentPointC, currentPointD, adjustedCrossTValue);
-            Vector3 right = Vector3.Cross(Vector3.up, forward);
-            Vector3 up = Vector3.Cross(forward, right);
-
-            // Compute the vertices for the cross section at this point
             for (int j = 0; j < CrossSection.vertices.Length; j++)
             {
-                // 2D-point xcoord times tight-vector + y-coord times up-vector
-                point = CrossSection.vertices[j].point.x * right + CrossSection.vertices[j].point.y * up;
-
-                point *= RoadScaler;
-
-                point += bezPoint;
-
-                vertices.Add(point);
-            }
-
-            float length = Vector3.Distance(prevPoint, Vector3.zero);
-            lenghts.Add(length);
-            totalLength += length;
-
-            Debug.Log(totalLength);
-        }
-
-        //UVs
-        if (loop)
-        {
-            // UVs
-            for (int i = 0; i < crossSectionCount + 1; i++)
-            {
-                Debug.Log(lenghts[i]);
-                currentLenght += lenghts[i];
-
-                for (int j = 0; j < CrossSection.vertices.Length; j++)
-                {
-                    uvs.Add(new Vector2(CrossSection.vertices[j].u, currentLenght / totalLength));
-                    Debug.Log(currentLenght);
-                }
+                uvs.Add(new Vector2(CrossSection.vertices[j].u, currentLenght / totalLength));
             }
         }
 
         // Triangles
         List<int> tris = new List<int>();
 
-        for (int k = 0; k < crossSectionCount; k++)
+        for (int k = 0; k < roadPartsCount; k++)
         {
             int offset = 16;
             int current = k * offset;
@@ -396,9 +391,9 @@ public class BezierRoad : MonoBehaviour
 
 
         // LAST CROSS SECTION
-        if(!loop)
+        if(loop)
         {
-            int lastCrossSection = (crossSectionCount - 1) * 16;
+            int lastCrossSection = roadPartsCount * 16;
             int first = 0;
 
             for (int currentCrossSec = 0; currentCrossSec < 7; currentCrossSec++)
@@ -416,7 +411,7 @@ public class BezierRoad : MonoBehaviour
             }
 
             // LAST CROSS SECTION LAST TRIAGLES
-            lastCrossSection = (crossSectionCount - 1) * 16;
+            lastCrossSection = roadPartsCount * 16;
             first = 0;
 
             tris.Add(lastCrossSection + 15);
@@ -437,7 +432,6 @@ public class BezierRoad : MonoBehaviour
     }
     void Start()
     {
-        GenerateRoadMesh();
-        GetComponent<MeshFilter>().sharedMesh = mesh;
+
     }
 }
