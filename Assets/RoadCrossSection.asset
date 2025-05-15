@@ -33,19 +33,19 @@ MonoBehaviour:
     u: 0.8333333
   - point: {x: 7, y: -1}
     normal: {x: 1, y: 0}
-    u: 1
+    u: 0.8
   - point: {x: 7, y: -1}
     normal: {x: 0, y: -1}
-    u: 1
+    u: 0.8
   - point: {x: -7, y: -1}
     normal: {x: 0, y: -1}
-    u: 0
+    u: 0.8
   - point: {x: -7, y: -1}
     normal: {x: -1, y: 0}
-    u: 0
+    u: 0.8
   - point: {x: -7, y: 1}
     normal: {x: -1, y: 0}
-    u: 0.1666667
+    u: 0.8
   - point: {x: -7, y: 1}
     normal: {x: 0, y: 1}
     u: 0.1666667

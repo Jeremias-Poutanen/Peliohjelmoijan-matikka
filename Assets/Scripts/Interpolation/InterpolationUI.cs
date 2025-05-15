@@ -9,6 +9,7 @@ using UnityEngine.UI;
 public class InterpolationUI : MonoBehaviour
 {
     public Image notificationObj;
+    Vector3 originalPos;
     public TMP_Text notificationText;
 
     // Timings
@@ -31,14 +32,11 @@ public class InterpolationUI : MonoBehaviour
     
     void Start()
     {
-        StartCoroutine(StartEffects());
+        originalPos = notificationObj.transform.position;
     }
 
-    // This coroutine is here only for the starting delay, since Unity Editor freezes for a little bit when starting Play Mode
-    private IEnumerator StartEffects()
+    public void StartEffects()
     {
-        yield return new WaitForSeconds(1f);
-
         StartCoroutine(NotificationPositionEasing());
         StartCoroutine(NotificationScaleEasing(true, notificationScaleUpTime));
     }
@@ -98,11 +96,20 @@ public class InterpolationUI : MonoBehaviour
             {
                 scale = (1 - t) * startScale + t * new Vector3(startScale.x * scaleDownMultiplier, startScale.x * scaleDownMultiplier, startScale.x * scaleDownMultiplier);
             }
-            
+
             // Scale the game object
             notificationObj.rectTransform.localScale = scale;
 
             yield return new WaitForEndOfFrame();
+        }
+        
+        if (scaleUp)
+        {
+            scale = startScale * scaleUpMultiplier;
+        }
+        else
+        {
+            scale = startScale * scaleDownMultiplier;
         }
     }
 
@@ -137,11 +144,13 @@ public class InterpolationUI : MonoBehaviour
             yield return new WaitForEndOfFrame();
         }
 
-            objColor.a = 0;
-            textColor.a = 0;
+        notificationObj.transform.position = originalPos;
 
-            notificationObj.color = objColor;
-            notificationText.color = textColor;
+        objColor.a = 1;
+        textColor.a = 1;
+
+        notificationObj.color = objColor;
+        notificationText.color = textColor;
     }
 }
 

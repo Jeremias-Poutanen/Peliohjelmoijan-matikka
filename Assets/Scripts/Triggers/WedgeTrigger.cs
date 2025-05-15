@@ -53,11 +53,11 @@ public class WedgeTrigger : MonoBehaviour
         rotation = Quaternion.Euler(0, -angle, 0);
         Vector3 l_limitLeft = rotation * l_hat;
 
-        Vector3 topOfLimitRight = new Vector3(l_limitRight.x * radius, l_limitRight.y + (height / 2), l_limitRight.z * radius);
-        Vector3 underLimitRight = new Vector3(l_limitRight.x * radius, l_limitRight.y - (height / 2), l_limitRight.z * radius);
+        Vector3 topOfLimitRight = vecTriggerPos + new Vector3(l_limitRight.x * radius, l_limitRight.y + (height / 2), l_limitRight.z * radius);
+        Vector3 underLimitRight = vecTriggerPos + new Vector3(l_limitRight.x * radius, l_limitRight.y - (height / 2), l_limitRight.z * radius);
 
-        Vector3 topOfLimitLeft = new Vector3(l_limitLeft.x * radius, l_limitLeft.y + (height / 2), l_limitLeft.z * radius);
-        Vector3 underLimitLeft = new Vector3(l_limitLeft.x * radius, l_limitLeft.y - (height / 2), l_limitLeft.z * radius);
+        Vector3 topOfLimitLeft = vecTriggerPos + new Vector3(l_limitLeft.x * radius, l_limitLeft.y + (height / 2), l_limitLeft.z * radius);
+        Vector3 underLimitLeft = vecTriggerPos + new Vector3(l_limitLeft.x * radius, l_limitLeft.y - (height / 2), l_limitLeft.z * radius);
 
         // Check if target is seen by enemy
         if (dotProduct > Mathf.Cos(thresholdAngle / 2 * Mathf.Deg2Rad) && vecTargetPos.y < topOfTrigger.y && vecTargetPos.y > underTrigger.y)

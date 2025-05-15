@@ -133,19 +133,19 @@ Material:
     - _Glossiness: 0
     - _GlossyReflections: 0
     - _Metallic: 0
-    - _MountainHeight: 7
+    - _MountainHeight: -2
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
-    - _SnowHeight: 17
+    - _SnowHeight: 7
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
-    - _WaterHeight: 0.5
+    - _WaterHeight: -9.7
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:

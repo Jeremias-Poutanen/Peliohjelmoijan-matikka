@@ -9,7 +9,7 @@ Shader "Unlit/HeightShader"
         _WaterTex ("Water Texture", 2D) = "white" {}
         // Float parameters for "texturing"
         _SnowHeight ("Snow Height", Range(0.0, 1000.0)) = 100.0
-        _MountainHeight ("Mountain Height", Range(0.0, 1000.0)) = 50
+        _MountainHeight ("Mountain Height", Range(-10.0, 1000.0)) = 50
         _WaterHeight ("Water Height", Range(-100.0, 100.0)) = 0.1
         _BlendingHeight ("Blending Distance", Range(0.0, 100.0)) = 1.0
     }
